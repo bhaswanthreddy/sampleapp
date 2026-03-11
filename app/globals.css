@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+@keyframes spin {
+
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+
+@keyframes orbit {
+
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+
+.shooting-star {
+
+  position: absolute;
+  left: -150px;
+  width: 180px;
+  height: 3px;
+
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,1),
+    rgba(255,255,255,0)
+  );
+
+  border-radius: 999px;
+
+  transform: rotate(25deg);
+
+  animation: shooting 1.8s linear forwards;
+
+}
+
+@keyframes shooting {
+
+  0% {
+    transform: translateX(0) translateY(0) rotate(25deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(120vw) translateY(40vh) rotate(25deg);
+    opacity: 0;
+  }
+
+}
