@@ -144,17 +144,13 @@ return()=>clearInterval(interval)
 
 useEffect(()=>{
 
-const spawnUfo=()=>{
+const interval=setInterval(()=>{
 
 setShowUfo(true)
 
 setTimeout(()=>setShowUfo(false),15000)
 
-}
-
-spawnUfo()
-
-const interval=setInterval(spawnUfo,180000)
+},180000)
 
 return()=>clearInterval(interval)
 
