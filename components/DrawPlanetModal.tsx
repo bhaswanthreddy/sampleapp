@@ -23,6 +23,22 @@ export default function DrawPlanetModal({ close }: any) {
     "#E6F0FF"
   ]
 
+  const getXY = (e: any, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect()
+
+    if (e.touches) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      }
+    }
+
+    return {
+      x: e.nativeEvent.offsetX,
+      y: e.nativeEvent.offsetY
+    }
+  }
+
   const start = (e: any) => {
 
     setDrawing(true)
@@ -30,8 +46,10 @@ export default function DrawPlanetModal({ close }: any) {
     const canvas = canvasRef.current
     const ctx = canvas!.getContext("2d")!
 
+    const { x, y } = getXY(e, canvas!)
+
     ctx.beginPath()
-    ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+    ctx.moveTo(x, y)
 
   }
 
@@ -53,11 +71,13 @@ export default function DrawPlanetModal({ close }: any) {
     const canvas = canvasRef.current
     const ctx = canvas!.getContext("2d")!
 
+    const { x, y } = getXY(e, canvas!)
+
     ctx.lineWidth = size
     ctx.lineCap = "round"
     ctx.strokeStyle = color
 
-    ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+    ctx.lineTo(x, y)
     ctx.stroke()
 
   }
@@ -73,50 +93,46 @@ export default function DrawPlanetModal({ close }: any) {
 
   const launchPlanet = async () => {
 
-  const canvas = canvasRef.current
-  if (!canvas) return
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-  const imageData = canvas.toDataURL("image/png")
+    const imageData = canvas.toDataURL("image/png")
 
-  const blob = await (await fetch(imageData)).blob()
+    const blob = await (await fetch(imageData)).blob()
 
-  const fileName = `planet-${Date.now()}.png`
+    const fileName = `planet-${Date.now()}.png`
 
-  // Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from("planets")
-    .upload(fileName, blob)
+    const { error: uploadError } = await supabase.storage
+      .from("planets")
+      .upload(fileName, blob)
 
-  if (uploadError) {
-    console.error("Upload error:", uploadError)
-    return
+    if (uploadError) {
+      console.error("Upload error:", uploadError)
+      return
+    }
+
+    const { data } = supabase.storage
+      .from("planets")
+      .getPublicUrl(fileName)
+
+    const imageUrl = data.publicUrl
+
+    const { error: dbError } = await supabase
+      .from("planets")
+      .insert({
+        name: planetName,
+        image_url: imageUrl
+      })
+
+    if (dbError) {
+      console.error("DB error:", JSON.stringify(dbError, null, 2))
+      return
+    }
+
+    window.location.reload()
+    close()
+
   }
-
-  // Get public URL
-  const { data } = supabase.storage
-    .from("planets")
-    .getPublicUrl(fileName)
-
-  const imageUrl = data.publicUrl
-
-  // Insert into database
-  const { error: dbError } = await supabase
-    .from("planets")
-    .insert({
-      name: planetName,
-      image_url: imageUrl
-    })
-
-  if (dbError) {
-    console.error("DB error:", JSON.stringify(dbError, null, 2))
-    return
-  }
-
-  window.location.reload()
-
-  close()
-
-}
 
   return (
 
@@ -135,9 +151,10 @@ export default function DrawPlanetModal({ close }: any) {
           onMouseUp={stop}
           onMouseLeave={stop}
           onMouseMove={draw}
+          onTouchStart={start}
+          onTouchEnd={stop}
+          onTouchMove={draw}
         />
-
-        {/* Color palette */}
 
         <div className="flex gap-2 mb-4 flex-wrap">
 
@@ -153,8 +170,6 @@ export default function DrawPlanetModal({ close }: any) {
           ))}
 
         </div>
-
-        {/* Brush size */}
 
         <div className="flex gap-4 mb-4">
 
@@ -174,16 +189,12 @@ export default function DrawPlanetModal({ close }: any) {
 
         </div>
 
-        {/* Planet name */}
-
         <input
           value={planetName}
           onChange={(e) => setPlanetName(e.target.value)}
           placeholder="Planet name (optional)"
           className="w-full mb-4 p-2 rounded text-black"
         />
-
-        {/* Buttons */}
 
         <div className="flex justify-between">
 
